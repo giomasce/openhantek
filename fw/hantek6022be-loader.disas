@@ -1,0 +1,538 @@
+
+# Jump to entry point
+CSEG AT 0000h
+  0000 02037F		LJMP L0001
+
+# External interrupt 0
+  0003 020336		LJMP L0052
+
+CSEG AT 0043h
+# Autovectored USB interrupt
+  0043 020400		LJMP L0055
+
+CSEG AT 0080h
+L0013:
+  0080 90E6B9		MOV DPTR, #0E6B9h     # Take received bmRequest byte
+  0083 E0    		MOVX A, @DPTR
+  0084 64A3  		XRL A, #0A3h
+  0086 6003  		JZ L0015
+  0088 020198		LJMP L0016
+
+L0015:                                # If bmRequest is A3h...
+  008B A3    		INC DPTR
+  008C E0    		MOVX A, @DPTR
+  008D 750800		MOV 8h, #0h           # Put wValue in 8h:9h
+  0090 F509  		MOV 9h, A
+  0092 A3    		INC DPTR
+  0093 E0    		MOVX A, @DPTR
+  0094 FE    		MOV R6, A
+  0095 E4    		CLR A
+  0096 EE    		MOV A, R6
+  0097 4208  		ORL 8h, A
+  0099 90E6BE		MOV DPTR, #0E6BEh     # Put wLength in Ah:Bh
+  009C E0    		MOVX A, @DPTR
+  009D 750A00		MOV 0Ah, #0h
+  00A0 F50B  		MOV 0Bh, A
+  00A2 A3    		INC DPTR
+  00A3 E0    		MOVX A, @DPTR
+  00A4 FE    		MOV R6, A
+  00A5 E4    		CLR A
+  00A6 EE    		MOV A, R6
+  00A7 420A  		ORL 0Ah, A
+
+  00A9 90E6B8		MOV DPTR, #0E6B8h     # Take received bmRequestType byte
+  00AC E0    		MOVX A, @DPTR
+  00AD 6440  		XRL A, #40h
+  00AF 7066  		JNZ L0018
+L0024:                                # If bmRequestType is 40h...
+  00B1 E50B  		MOV A, 0Bh
+  00B3 450A  		ORL A, 0Ah
+  00B5 7003  		JNZ L0019
+  00B7 0201AD		LJMP L0017
+
+L0019:                                # If message has non-zero length... (i.e., there is still something to copy)
+  00BA E4    		CLR A
+  00BB 90E68A		MOV DPTR, #0E68Ah     # Clear wValue in SETUPDAT registers
+  00BE F0    		MOVX @DPTR, A
+  00BF A3    		INC DPTR
+  00C0 F0    		MOVX @DPTR, A
+L0020:
+  00C1 90E6A0		MOV DPTR, #0E6A0h     # Wait until bit 1 in E6A0h is cleared, i.e., until a SETUP token arrives
+  00C4 E0    		MOVX A, @DPTR
+  00C5 20E1F9		JB ACC.1, L0020
+  00C8 90E68B		MOV DPTR, #0E68Bh     # Put status byte count low byte in 0Dh
+  00CB E0    		MOVX A, @DPTR
+  00CC 750C00		MOV 0Ch, #0h
+  00CF F50D  		MOV 0Dh, A
+  00D1 E4    		CLR A
+  00D2 FC    		MOV R4, A             # Copy EP0 buffer to target location
+  00D3 FD    		MOV R5, A             # First: initialize R4 and R5 as copy counters
+L0023:
+  00D4 C3    		CLR C
+  00D5 ED    		MOV A, R5
+  00D6 950D  		SUBB A, 0Dh
+  00D8 EC    		MOV A, R4
+  00D9 950C  		SUBB A, 0Ch
+  00DB 501F  		JNC L0021             # If we copied enough bytes, terminate and go to L0021
+  00DD 7440  		MOV A, #40h           # Load E740h + offset in DPTR
+  00DF 2D    		ADD A, R5
+  00E0 F582  		MOV DPL, A
+  00E2 E4    		CLR A
+  00E3 34E7  		ADDC A, #0E7h
+  00E5 F583  		MOV DPH, A
+  00E7 E0    		MOVX A, @DPTR
+  00E8 FF    		MOV R7, A             # Save current byte in R7
+  00E9 E509  		MOV A, 9h             # Load address in 08h:09h + offset in DPTR
+  00EB 2D    		ADD A, R5
+  00EC F582  		MOV DPL, A
+  00EE E508  		MOV A, 8h
+  00F0 3C    		ADDC A, R4
+  00F1 F583  		MOV DPH, A
+  00F3 EF    		MOV A, R7             # Copy saved byte to correct place
+  00F4 F0    		MOVX @DPTR, A
+  00F5 0D    		INC R5                # Increment offset
+  00F6 BD0001		CJNE R5, #0h, L0022
+  00F9 0C    		INC R4
+L0022:
+  00FA 80D8  		SJMP L0023
+
+L0021:
+  00FC E50D  		MOV A, 0Dh            # Add 0Ch:0Dh (status bytes count low) to 08h:09h (where to write data)
+  00FE 2509  		ADD A, 9h
+  0100 F509  		MOV 9h, A
+  0102 E50C  		MOV A, 0Ch
+  0104 3508  		ADDC A, 8h
+  0106 F508  		MOV 8h, A
+  0108 C3    		CLR C
+  0109 E50B  		MOV A, 0Bh            # Subtract OCh:0Dh to 0Ah:0Bh (total length)
+  010B 950D  		SUBB A, 0Dh
+  010D F50B  		MOV 0Bh, A
+  010F E50A  		MOV A, 0Ah
+  0111 950C  		SUBB A, 0Ch
+  0113 F50A  		MOV 0Ah, A
+  0115 809A  		SJMP L0024            # And restart copying data!
+
+L0018:
+  0117 90E6B8		MOV DPTR, #0E6B8h     # If bmRequestType is not 40h...
+  011A E0    		MOVX A, @DPTR
+  011B 64C0  		XRL A, #0C0h
+  011D 6003  		JZ L0025
+  011F 0201AD		LJMP L0017            # Goto end of the procedure
+
+L0025:                                # If bmRequestType is C0h...
+  0122 E50B  		MOV A, 0Bh
+  0124 450A  		ORL A, 0Ah
+  0126 7003  		JNZ L0026
+  0128 0201AD		LJMP L0017            # If wLength is zero, goto end of the procedure
+
+L0026:                                # If wLength is non-zero...
+  012B C3    		CLR C
+  012C E50B  		MOV A, 0Bh
+  012E 9440  		SUBB A, #40h
+  0130 E50A  		MOV A, 0Ah
+  0132 9400  		SUBB A, #0h
+  0134 5008  		JNC L0027
+  0136 850A0C		MOV 0Ch, 0Ah
+  0139 850B0D		MOV 0Dh, 0Bh
+  013C 8006  		SJMP L0028
+
+L0027:
+  013E 750C00		MOV 0Ch, #0h
+  0141 750D40		MOV 0Dh, #40h
+L0028:
+  0144 E4    		CLR A
+  0145 FC    		MOV R4, A
+  0146 FD    		MOV R5, A
+L0031:
+  0147 C3    		CLR C
+  0148 ED    		MOV A, R5
+  0149 950D  		SUBB A, 0Dh
+  014B EC    		MOV A, R4
+  014C 950C  		SUBB A, 0Ch
+  014E 501F  		JNC L0029
+  0150 E509  		MOV A, 9h
+  0152 2D    		ADD A, R5
+  0153 F582  		MOV DPL, A
+  0155 E508  		MOV A, 8h
+  0157 3C    		ADDC A, R4
+  0158 F583  		MOV DPH, A
+  015A E0    		MOVX A, @DPTR
+  015B FF    		MOV R7, A
+  015C 7440  		MOV A, #40h
+  015E 2D    		ADD A, R5
+  015F F582  		MOV DPL, A
+  0161 E4    		CLR A
+  0162 34E7  		ADDC A, #0E7h
+  0164 F583  		MOV DPH, A
+  0166 EF    		MOV A, R7
+  0167 F0    		MOVX @DPTR, A
+  0168 0D    		INC R5
+  0169 BD0001		CJNE R5, #0h, L0030
+  016C 0C    		INC R4
+L0030:
+  016D 80D8  		SJMP L0031
+
+L0029:
+  016F E4    		CLR A
+  0170 90E68A		MOV DPTR, #0E68Ah
+  0173 F0    		MOVX @DPTR, A
+  0174 A3    		INC DPTR
+  0175 E50D  		MOV A, 0Dh
+  0177 F0    		MOVX @DPTR, A
+  0178 2509  		ADD A, 9h
+  017A F509  		MOV 9h, A
+  017C E50C  		MOV A, 0Ch
+  017E 3508  		ADDC A, 8h
+  0180 F508  		MOV 8h, A
+  0182 C3    		CLR C
+  0183 E50B  		MOV A, 0Bh
+  0185 950D  		SUBB A, 0Dh
+  0187 F50B  		MOV 0Bh, A
+  0189 E50A  		MOV A, 0Ah
+  018B 950C  		SUBB A, 0Ch
+  018D F50A  		MOV 0Ah, A
+L0032:
+  018F 90E6A0		MOV DPTR, #0E6A0h
+  0192 E0    		MOVX A, @DPTR
+  0193 30E18C		JNB ACC.1, L0025
+  0196 80F7  		SJMP L0032
+
+L0016:
+  0198 90E6B9		MOV DPTR, #0E6B9h
+  019B E0    		MOVX A, @DPTR
+  019C B4AC0E		CJNE A, #0ACh, L0017
+  019F 90E740		MOV DPTR, #0E740h
+  01A2 7401  		MOV A, #1h
+  01A4 F0    		MOVX @DPTR, A
+  01A5 E4    		CLR A
+  01A6 90E68A		MOV DPTR, #0E68Ah
+  01A9 F0    		MOVX @DPTR, A
+  01AA A3    		INC DPTR
+  01AB 04    		INC A
+  01AC F0    		MOVX @DPTR, A
+
+# Finish load procedure
+L0017:
+  01AD 90E6A0		MOV DPTR, #0E6A0h                      # ACK the STATUS stage
+  01B0 E0    		MOVX A, @DPTR
+  01B1 4480  		ORL A, #80h
+  01B3 F0    		MOVX @DPTR, A
+  01B4 22    		RET
+
+L0033:
+  01B5 907FE9		MOV DPTR, #07FE9h
+  01B8 E0    		MOVX A, @DPTR
+  01B9 64A3  		XRL A, #0A3h
+  01BB 6003  		JZ L0034
+  01BD 0202C5		LJMP L0035
+
+L0034:
+  01C0 A3    		INC DPTR
+  01C1 E0    		MOVX A, @DPTR
+  01C2 750800		MOV 8h, #0h
+  01C5 F509  		MOV 9h, A
+  01C7 A3    		INC DPTR
+  01C8 E0    		MOVX A, @DPTR
+  01C9 FE    		MOV R6, A
+  01CA E4    		CLR A
+  01CB EE    		MOV A, R6
+  01CC 4208  		ORL 8h, A
+  01CE 907FEE		MOV DPTR, #07FEEh
+  01D1 E0    		MOVX A, @DPTR
+  01D2 750A00		MOV 0Ah, #0h
+  01D5 F50B  		MOV 0Bh, A
+  01D7 A3    		INC DPTR
+  01D8 E0    		MOVX A, @DPTR
+  01D9 FE    		MOV R6, A
+  01DA E4    		CLR A
+  01DB EE    		MOV A, R6
+  01DC 420A  		ORL 0Ah, A
+  01DE 907FE8		MOV DPTR, #07FE8h
+  01E1 E0    		MOVX A, @DPTR
+  01E2 6440  		XRL A, #40h
+  01E4 7064  		JNZ L0037
+L0043:
+  01E6 E50B  		MOV A, 0Bh
+  01E8 450A  		ORL A, 0Ah
+  01EA 7003  		JNZ L0038
+  01EC 0202D6		LJMP L0036
+
+L0038:
+  01EF E4    		CLR A
+  01F0 907FC5		MOV DPTR, #07FC5h
+  01F3 F0    		MOVX @DPTR, A
+L0039:
+  01F4 907FB4		MOV DPTR, #07FB4h
+  01F7 E0    		MOVX A, @DPTR
+  01F8 20E3F9		JB ACC.3, L0039
+  01FB 907FC5		MOV DPTR, #07FC5h
+  01FE E0    		MOVX A, @DPTR
+  01FF 750C00		MOV 0Ch, #0h
+  0202 F50D  		MOV 0Dh, A
+  0204 E4    		CLR A
+  0205 FC    		MOV R4, A
+  0206 FD    		MOV R5, A
+L0042:
+  0207 C3    		CLR C
+  0208 ED    		MOV A, R5
+  0209 950D  		SUBB A, 0Dh
+  020B EC    		MOV A, R4
+  020C 950C  		SUBB A, 0Ch
+  020E 501F  		JNC L0040
+  0210 74C0  		MOV A, #0C0h
+  0212 2D    		ADD A, R5
+  0213 F582  		MOV DPL, A
+  0215 E4    		CLR A
+  0216 347E  		ADDC A, #7Eh
+  0218 F583  		MOV DPH, A
+  021A E0    		MOVX A, @DPTR
+  021B FF    		MOV R7, A
+  021C E509  		MOV A, 9h
+  021E 2D    		ADD A, R5
+  021F F582  		MOV DPL, A
+  0221 E508  		MOV A, 8h
+  0223 3C    		ADDC A, R4
+  0224 F583  		MOV DPH, A
+  0226 EF    		MOV A, R7
+  0227 F0    		MOVX @DPTR, A
+  0228 0D    		INC R5
+  0229 BD0001		CJNE R5, #0h, L0041
+  022C 0C    		INC R4
+L0041:
+  022D 80D8  		SJMP L0042
+
+L0040:
+  022F E50D  		MOV A, 0Dh
+  0231 2509  		ADD A, 9h
+  0233 F509  		MOV 9h, A
+  0235 E50C  		MOV A, 0Ch
+  0237 3508  		ADDC A, 8h
+  0239 F508  		MOV 8h, A
+  023B C3    		CLR C
+  023C E50B  		MOV A, 0Bh
+  023E 950D  		SUBB A, 0Dh
+  0240 F50B  		MOV 0Bh, A
+  0242 E50A  		MOV A, 0Ah
+  0244 950C  		SUBB A, 0Ch
+  0246 F50A  		MOV 0Ah, A
+  0248 809C  		SJMP L0043
+
+L0037:
+  024A 907FE8		MOV DPTR, #07FE8h
+  024D E0    		MOVX A, @DPTR
+  024E 64C0  		XRL A, #0C0h
+  0250 6003  		JZ L0044
+  0252 0202D6		LJMP L0036
+
+L0044:
+  0255 E50B  		MOV A, 0Bh
+  0257 450A  		ORL A, 0Ah
+  0259 607B  		JZ L0036
+  025B C3    		CLR C
+  025C E50B  		MOV A, 0Bh
+  025E 9440  		SUBB A, #40h
+  0260 E50A  		MOV A, 0Ah
+  0262 9400  		SUBB A, #0h
+  0264 5008  		JNC L0045
+  0266 850A0C		MOV 0Ch, 0Ah
+  0269 850B0D		MOV 0Dh, 0Bh
+  026C 8006  		SJMP L0046
+
+L0045:
+  026E 750C00		MOV 0Ch, #0h
+  0271 750D40		MOV 0Dh, #40h
+L0046:
+  0274 E4    		CLR A
+  0275 FC    		MOV R4, A
+  0276 FD    		MOV R5, A
+L0049:
+  0277 C3    		CLR C
+  0278 ED    		MOV A, R5
+  0279 950D  		SUBB A, 0Dh
+  027B EC    		MOV A, R4
+  027C 950C  		SUBB A, 0Ch
+  027E 501F  		JNC L0047
+  0280 E509  		MOV A, 9h
+  0282 2D    		ADD A, R5
+  0283 F582  		MOV DPL, A
+  0285 E508  		MOV A, 8h
+  0287 3C    		ADDC A, R4
+  0288 F583  		MOV DPH, A
+  028A E0    		MOVX A, @DPTR
+  028B FF    		MOV R7, A
+  028C 7400  		MOV A, #0h
+  028E 2D    		ADD A, R5
+  028F F582  		MOV DPL, A
+  0291 E4    		CLR A
+  0292 347F  		ADDC A, #7Fh
+  0294 F583  		MOV DPH, A
+  0296 EF    		MOV A, R7
+  0297 F0    		MOVX @DPTR, A
+  0298 0D    		INC R5
+  0299 BD0001		CJNE R5, #0h, L0048
+  029C 0C    		INC R4
+L0048:
+  029D 80D8  		SJMP L0049
+
+L0047:
+  029F 907FB5		MOV DPTR, #07FB5h
+  02A2 E50D  		MOV A, 0Dh
+  02A4 F0    		MOVX @DPTR, A
+  02A5 2509  		ADD A, 9h
+  02A7 F509  		MOV 9h, A
+  02A9 E50C  		MOV A, 0Ch
+  02AB 3508  		ADDC A, 8h
+  02AD F508  		MOV 8h, A
+  02AF C3    		CLR C
+  02B0 E50B  		MOV A, 0Bh
+  02B2 950D  		SUBB A, 0Dh
+  02B4 F50B  		MOV 0Bh, A
+  02B6 E50A  		MOV A, 0Ah
+  02B8 950C  		SUBB A, 0Ch
+  02BA F50A  		MOV 0Ah, A
+L0050:
+  02BC 907FB4		MOV DPTR, #07FB4h
+  02BF E0    		MOVX A, @DPTR
+  02C0 30E292		JNB ACC.2, L0044
+  02C3 80F7  		SJMP L0050
+
+L0035:
+  02C5 907FE9		MOV DPTR, #07FE9h
+  02C8 E0    		MOVX A, @DPTR
+  02C9 B4AC0A		CJNE A, #0ACh, L0036
+  02CC E4    		CLR A
+  02CD 907F00		MOV DPTR, #07F00h
+  02D0 F0    		MOVX @DPTR, A
+  02D1 907FB5		MOV DPTR, #07FB5h
+  02D4 04    		INC A
+  02D5 F0    		MOVX @DPTR, A
+L0036:
+  02D6 907FB4		MOV DPTR, #07FB4h
+  02D9 E0    		MOVX A, @DPTR
+  02DA 4402  		ORL A, #2h
+  02DC F0    		MOVX @DPTR, A
+  02DD 22    		RET
+
+L0003:
+  02DE C201  		CLR 1h                # Clear bit 1 in RAM 20h
+  02E0 120368		LCALL L0004
+  02E3 9200  		MOV 0h, C             # Bit 0 in RAM 20h is whether INTSETUP is as expected
+  02E5 907F95		MOV DPTR, #07F95h
+  02E8 E0    		MOVX A, @DPTR
+  02E9 44C0  		ORL A, #0C0h
+  02EB F0    		MOVX @DPTR, A         # Set bit 6 and 7 in 7F95h
+  02EC D2E8  		SETB 0E8h             # Set bit 0 in RAM E8h
+
+  02EE 300008		JNB 0h, L0005         # If INTSETUP is as expected...
+  02F1 90E65D		MOV DPTR, #0E65Dh
+  02F4 74FF  		MOV A, #0FFh
+  02F6 F0    		MOVX @DPTR, A         # Clear all USB interrupts (E65Dh is USBIRQ register)
+  02F7 8006  		SJMP L0006
+L0005:                                # If not...
+  02F9 907FAB		MOV DPTR, #07FABh
+  02FC 74FF  		MOV A, #0FFh
+  02FE F0    		MOVX @DPTR, A         # Write FFh to 7FABh
+
+L0006:
+  02FF 300008		JNB 0h, L0007         # If INTSETUP is as expected...
+  0302 90E668		MOV DPTR, #0E668h
+  0305 7408  		MOV A, #8h
+  0307 F0    		MOVX @DPTR, A         # Enable INT2 autovectoring, disable INT4 autovectoring and take INT4 from pin
+  0308 8007  		SJMP L0008
+L0007:                                # If not...
+  030A 907FAF		MOV DPTR, #07FAFh
+  030D E0    		MOVX A, @DPTR
+  030E 4401  		ORL A, #1h
+  0310 F0    		MOVX @DPTR, A         # Write 1h to 7FAFh
+
+L0008:
+  0311 300008		JNB 0h, L0009         # If INTSETUP is as expected...
+  0314 90E65C		MOV DPTR, #0E65Ch
+  0317 7401  		MOV A, #1h
+  0319 F0    		MOVX @DPTR, A         # Clear SETUPDAT interrupt request
+  031A 8006  		SJMP L0010
+L0009:                                # If not...
+  031C 907FAE		MOV DPTR, #07FAEh
+  031F 7401  		MOV A, #1h
+  0321 F0    		MOVX @DPTR, A         # Write 1h to 7FAEh
+
+L0010:
+  0322 D2AF  		SETB EA               # Set bit 2 in RAM E8h
+
+# Main loop (?)
+L0011:
+  0324 3001FD		JNB 1h, L0011         # Wait for bit 1 in RAM 20h to be set
+  0327 300005		JNB 0h, L0012         # If INTSETUP is as expected...
+  032A 120080		LCALL L0013
+  032D 8003  		SJMP L0014
+L0012:                                # Otherwise...
+  032F 1201B5		LCALL L0033
+L0014:
+  0332 C201  		CLR 1h                # Reset bit 1 in RAM 20h
+  0334 80EE  		SJMP L0011
+
+L0052:
+  0336 C0E0  		PUSH ACC
+  0338 C083  		PUSH DPH
+  033A C082  		PUSH DPL
+  033C C085  		PUSH 85h
+  033E C084  		PUSH 84h
+  0340 C086  		PUSH 86h
+  0342 758600		MOV 86h, #0h
+  0345 D201  		SETB 1h
+  0347 5391EF		ANL 91h, #0EFh
+  034A 300008		JNB 0h, L0053
+  034D 90E65D		MOV DPTR, #0E65Dh
+  0350 7401  		MOV A, #1h
+  0352 F0    		MOVX @DPTR, A
+  0353 8006  		SJMP L0054
+
+L0053:
+  0355 907FAB		MOV DPTR, #07FABh
+  0358 7401  		MOV A, #1h
+  035A F0    		MOVX @DPTR, A
+L0054:
+  035B D086  		POP 86h
+  035D D084  		POP 84h
+  035F D085  		POP 85h
+  0361 D082  		POP DPL
+  0363 D083  		POP DPH
+  0365 D0E0  		POP ACC
+  0367 32    		RETI
+
+# Check interrupt setup (E668h is INTSETUP and contains configuration about INT2 and INT4 source autovectoring); set Carry and return if interrupts are as we expect (which we always expect to happen), otherwise clear Carry
+L0004:
+  0368 90E668		MOV DPTR, #0E668h    # Set INTSETUP register
+  036B E0    		MOVX A, @DPTR
+  036C FF    		MOV R7, A            # Back ip up in R7
+  036D 74FF  		MOV A, #0FFh         # Set it to FFh
+  036F F0    		MOVX @DPTR, A
+  0370 E0    		MOVX A, @DPTR
+  0371 B40B04		CJNE A, #0Bh, L0051  # Check that only implemented bits are those we expect
+  0374 EF    		MOV A, R7
+  0375 F0    		MOVX @DPTR, A        # If so, restore INTSETUP
+  0376 D3    		SETB C               # and set Carry
+  0377 22    		RET
+L0051:
+  0378 90E668		MOV DPTR, #0E668h
+  037B EF    		MOV A, R7
+  037C F0    		MOVX @DPTR, A        # If not, restore INTSETUP
+  037D C3    		CLR C                # and clear Carry
+  037E 22    		RET
+
+# Entry point
+L0001:
+  037F 787F  		MOV R0, #7Fh
+  0381 E4    		CLR A
+L0002:
+  0382 F6    		MOV @R0, A       # Clear RAM 00h - 7Fh
+  0383 D8FD  		DJNZ R0, L0002
+  0385 758120		MOV SP, #20h     # Setup Stack Pointer
+  0388 0202DE		LJMP L0003
+
+CSEG AT 0400h
+L0055:
+  0400 020336		LJMP L0052
+
+  0403 00    		DB 000h 
+END

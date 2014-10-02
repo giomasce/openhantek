@@ -1,0 +1,1 @@
+dis51 -l 0 3 43 51 67 75 83 3832 3902 4497 4536 4573 < hantek6022be-firmware.hex > hantek6022be-firmware.disas

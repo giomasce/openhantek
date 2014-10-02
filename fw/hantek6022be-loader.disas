@@ -127,7 +127,7 @@ L0025:                                # If bmRequestType is C0h...
 
 L0026:                                # If wLength is non-zero...
   012B C3    		CLR C
-  012C E50B  		MOV A, 0Bh
+  012C E50B  		MOV A, 0Bh            # Compute max(40h, 0Ah:0Bh) and store it in 0Ch:0Dh
   012E 9440  		SUBB A, #40h
   0130 E50A  		MOV A, 0Ah
   0132 9400  		SUBB A, #0h
@@ -135,29 +135,29 @@ L0026:                                # If wLength is non-zero...
   0136 850A0C		MOV 0Ch, 0Ah
   0139 850B0D		MOV 0Dh, 0Bh
   013C 8006  		SJMP L0028
-
 L0027:
   013E 750C00		MOV 0Ch, #0h
   0141 750D40		MOV 0Dh, #40h
+
 L0028:
-  0144 E4    		CLR A
+  0144 E4    		CLR A                 # Clear R4 and R5
   0145 FC    		MOV R4, A
   0146 FD    		MOV R5, A
 L0031:
   0147 C3    		CLR C
-  0148 ED    		MOV A, R5
+  0148 ED    		MOV A, R5             # Compute R4:R5 - 0Ch:0Dh
   0149 950D  		SUBB A, 0Dh
   014B EC    		MOV A, R4
   014C 950C  		SUBB A, 0Ch
-  014E 501F  		JNC L0029
-  0150 E509  		MOV A, 9h
+  014E 501F  		JNC L0029             # If there are still bytes to transfer...
+  0150 E509  		MOV A, 9h             # Compute target address (08h:09h + R4:R5)
   0152 2D    		ADD A, R5
   0153 F582  		MOV DPL, A
   0155 E508  		MOV A, 8h
   0157 3C    		ADDC A, R4
   0158 F583  		MOV DPH, A
-  015A E0    		MOVX A, @DPTR
-  015B FF    		MOV R7, A
+  015A E0    		MOVX A, @DPTR         # Retrieve byte
+  015B FF    		MOV R7, A             # Compute USB buffer address (E740h + R4:R5)
   015C 7440  		MOV A, #40h
   015E 2D    		ADD A, R5
   015F F582  		MOV DPL, A
@@ -165,47 +165,47 @@ L0031:
   0162 34E7  		ADDC A, #0E7h
   0164 F583  		MOV DPH, A
   0166 EF    		MOV A, R7
-  0167 F0    		MOVX @DPTR, A
-  0168 0D    		INC R5
+  0167 F0    		MOVX @DPTR, A         # Store byte
+  0168 0D    		INC R5                # Increment counters
   0169 BD0001		CJNE R5, #0h, L0030
   016C 0C    		INC R4
 L0030:
-  016D 80D8  		SJMP L0031
+  016D 80D8  		SJMP L0031            # Restart loop
 
-L0029:
-  016F E4    		CLR A
+L0029:                                # If transfer has finished...
+  016F E4    		CLR A                 # Write the byte number in 0Ch:0Dh to the CP0 Byte Count registers
   0170 90E68A		MOV DPTR, #0E68Ah
   0173 F0    		MOVX @DPTR, A
   0174 A3    		INC DPTR
   0175 E50D  		MOV A, 0Dh
   0177 F0    		MOVX @DPTR, A
-  0178 2509  		ADD A, 9h
+  0178 2509  		ADD A, 9h             # Update the memory location value (08h:09h += 0Ch:0Dh)
   017A F509  		MOV 9h, A
   017C E50C  		MOV A, 0Ch
   017E 3508  		ADDC A, 8h
   0180 F508  		MOV 8h, A
   0182 C3    		CLR C
-  0183 E50B  		MOV A, 0Bh
+  0183 E50B  		MOV A, 0Bh            # Update the number of bytes left (0Ah:0Bh -= 0Ch:0Dh)
   0185 950D  		SUBB A, 0Dh
   0187 F50B  		MOV 0Bh, A
   0189 E50A  		MOV A, 0Ah
   018B 950C  		SUBB A, 0Ch
   018D F50A  		MOV 0Ah, A
 L0032:
-  018F 90E6A0		MOV DPTR, #0E6A0h
+  018F 90E6A0		MOV DPTR, #0E6A0h     # Wait for the next SETUP packet
   0192 E0    		MOVX A, @DPTR
   0193 30E18C		JNB ACC.1, L0025
   0196 80F7  		SJMP L0032
 
-L0016:
+L0016:                                # If bmRequest is not A3h
   0198 90E6B9		MOV DPTR, #0E6B9h
   019B E0    		MOVX A, @DPTR
-  019C B4AC0E		CJNE A, #0ACh, L0017
-  019F 90E740		MOV DPTR, #0E740h
+  019C B4AC0E		CJNE A, #0ACh, L0017  # If bmRequest is not A6h, jump to the end; else...
+  019F 90E740		MOV DPTR, #0E740h     # Write 01h in the packet buffer
   01A2 7401  		MOV A, #1h
   01A4 F0    		MOVX @DPTR, A
   01A5 E4    		CLR A
-  01A6 90E68A		MOV DPTR, #0E68Ah
+  01A6 90E68A		MOV DPTR, #0E68Ah     # Write 1 in the packet length
   01A9 F0    		MOVX @DPTR, A
   01AA A3    		INC DPTR
   01AB 04    		INC A
@@ -213,7 +213,7 @@ L0016:
 
 # Finish load procedure
 L0017:
-  01AD 90E6A0		MOV DPTR, #0E6A0h                      # ACK the STATUS stage
+  01AD 90E6A0		MOV DPTR, #0E6A0h     # ACK the STATUS stage
   01B0 E0    		MOVX A, @DPTR
   01B1 4480  		ORL A, #80h
   01B3 F0    		MOVX @DPTR, A
@@ -457,7 +457,7 @@ L0009:                                # If not...
   0321 F0    		MOVX @DPTR, A         # Write 1h to 7FAEh
 
 L0010:
-  0322 D2AF  		SETB EA               # Set bit 2 in RAM E8h
+  0322 D2AF  		SETB EA               # Set bit 2 in RAM E8h (enable external INT4)
 
 # Main loop (?)
 L0011:
@@ -471,28 +471,28 @@ L0014:
   0332 C201  		CLR 1h                # Reset bit 1 in RAM 20h
   0334 80EE  		SJMP L0011
 
+# Service an interrupt request
 L0052:
-  0336 C0E0  		PUSH ACC
+  0336 C0E0  		PUSH ACC              # Push everything on stack and setup local environment
   0338 C083  		PUSH DPH
   033A C082  		PUSH DPL
   033C C085  		PUSH 85h
   033E C084  		PUSH 84h
   0340 C086  		PUSH 86h
   0342 758600		MOV 86h, #0h
-  0345 D201  		SETB 1h
-  0347 5391EF		ANL 91h, #0EFh
-  034A 300008		JNB 0h, L0053
-  034D 90E65D		MOV DPTR, #0E65Dh
+  0345 D201  		SETB 1h               # Set bit 1 in RAM 20h
+  0347 5391EF		ANL 91h, #0EFh        # Unset bit 5 in RAM 91h (I2C bus interrupt does not have to be cleared by software)
+  034A 300008		JNB 0h, L0053         # If INTSETUP is as expected...
+  034D 90E65D		MOV DPTR, #0E65Dh     # Clear SOF interrupt request
   0350 7401  		MOV A, #1h
   0352 F0    		MOVX @DPTR, A
   0353 8006  		SJMP L0054
-
-L0053:
+L0053:                                # If not...
   0355 907FAB		MOV DPTR, #07FABh
   0358 7401  		MOV A, #1h
   035A F0    		MOVX @DPTR, A
 L0054:
-  035B D086  		POP 86h
+  035B D086  		POP 86h               # Reset everything
   035D D084  		POP 84h
   035F D085  		POP 85h
   0361 D082  		POP DPL

@@ -22,7 +22,8 @@ L0205:
   0027 D0E0  		POP ACC
   0029 32    		RETI
 
-  002A 32    		DB 032h ; '2'
+L0236:
+  002A 32    		RETI
 
   002B 0210A6		LJMP L0198
 
@@ -30,7 +31,8 @@ L0203:
   002E 53D8EF		ANL 0D8h, #0EFh
   0031 32    		RETI
 
-  0032 32    		DB 032h ; '2'
+L0237:
+  0032 32    		RETI
 
   0033 02002E		LJMP L0203
 
@@ -49,7 +51,8 @@ L0026:
   0040 D3    		SETB C
   0041 22    		RET
 
-  0042 32    		DB 032h ; '2'
+L0238:
+  0042 32    		RETI
 
   0043 020B00		LJMP L0204
 
@@ -61,7 +64,9 @@ L0176:
   0048 D3    		SETB C
   0049 22    		RET
 
-  004A 32    		DB 032h ; '2'
+L0239:
+  004A 32    		RETI
+
   004B 0209AD		LJMP L0206
 
 L0052:
@@ -72,7 +77,9 @@ L0063:
   0050 D3    		SETB C
   0051 22    		RET
 
-  0052 32    		DB 032h ; '2'
+L0240:
+  0052 32    		RETI
+
   0053 020B00		LJMP L0204
 
 L0094:
@@ -1774,191 +1781,147 @@ L0145:
   0AFB 121007		LCALL L0147
   0AFE 22    		RET
 
-  0AFF 32    		DB 032h ; '2'
+L0241:
+  0AFF 32    		RETI
 
 L0204:
   0B00 020003		LJMP L0205
 
   0B03 00    		DB 000h 
-  0B04 02    		DB 002h 
-  0B05 11    		DB 011h 
-  0B06 DD    		DB 0DDh 
+  0B04 0211DD		LJMP L0231
+
   0B07 00    		DB 000h 
-  0B08 02    		DB 002h 
-  0B09 11    		DB 011h 
-  0B0A B8    		DB 0B8h 
+  0B08 0211B8		LJMP L0232
+
   0B0B 00    		DB 000h 
-  0B0C 02    		DB 002h 
-  0B0D 11    		DB 011h 
-  0B0E 91    		DB 091h 
+  0B0C 021191		LJMP L0233
+
   0B0F 00    		DB 000h 
-  0B10 02    		DB 002h 
-  0B11 0E    		DB 00Eh 
-  0B12 F8    		DB 0F8h 
+  0B10 020EF8		LJMP L0234
+
   0B13 00    		DB 000h 
-  0B14 02    		DB 002h 
-  0B15 0F    		DB 00Fh 
-  0B16 3E    		DB 03Eh ; '>'
+  0B14 020F3E		LJMP L0235
+
   0B17 00    		DB 000h 
-  0B18 02    		DB 002h 
-  0B19 00    		DB 000h 
-  0B1A 2A    		DB 02Ah ; '*'
+  0B18 02002A		LJMP L0236
+
   0B1B 00    		DB 000h 
-  0B1C 02    		DB 002h 
-  0B1D 00    		DB 000h 
-  0B1E 32    		DB 032h ; '2'
+  0B1C 020032		LJMP L0237
+
   0B1F 00    		DB 000h 
-  0B20 02    		DB 002h 
-  0B21 00    		DB 000h 
-  0B22 42    		DB 042h ; 'B'
+  0B20 020042		LJMP L0238
+
   0B23 00    		DB 000h 
-  0B24 02    		DB 002h 
-  0B25 00    		DB 000h 
-  0B26 4A    		DB 04Ah ; 'J'
+  0B24 02004A		LJMP L0239
+
   0B27 00    		DB 000h 
-  0B28 02    		DB 002h 
-  0B29 00    		DB 000h 
-  0B2A 52    		DB 052h ; 'R'
+  0B28 020052		LJMP L0240
+
   0B2B 00    		DB 000h 
-  0B2C 02    		DB 002h 
-  0B2D 0A    		DB 00Ah 
-  0B2E FF    		DB 0FFh 
+  0B2C 020AFF		LJMP L0241
+
   0B2F 00    		DB 000h 
-  0B30 02    		DB 002h 
-  0B31 0C    		DB 00Ch 
-  0B32 FC    		DB 0FCh 
+  0B30 020CFC		LJMP L0242
+
   0B33 00    		DB 000h 
-  0B34 02    		DB 002h 
-  0B35 0C    		DB 00Ch 
-  0B36 FD    		DB 0FDh 
+  0B34 020CFD		LJMP L0243
+
   0B37 00    		DB 000h 
-  0B38 02    		DB 002h 
-  0B39 0C    		DB 00Ch 
-  0B3A FE    		DB 0FEh 
+  0B38 020CFE		LJMP L0244
+
   0B3B 00    		DB 000h 
-  0B3C 02    		DB 002h 
-  0B3D 0C    		DB 00Ch 
-  0B3E FF    		DB 0FFh 
+  0B3C 020CFF		LJMP L0245
+
   0B3F 00    		DB 000h 
-  0B40 02    		DB 002h 
-  0B41 12    		DB 012h 
-  0B42 77    		DB 077h ; 'w'
+  0B40 021277		LJMP L0246
+
   0B43 00    		DB 000h 
-  0B44 02    		DB 002h 
-  0B45 00    		DB 000h 
-  0B46 32    		DB 032h ; '2'
+  0B44 020032		LJMP L0237
+
   0B47 00    		DB 000h 
-  0B48 02    		DB 002h 
-  0B49 12    		DB 012h 
-  0B4A 78    		DB 078h ; 'x'
+  0B48 021278		LJMP L0247
+
   0B4B 00    		DB 000h 
-  0B4C 02    		DB 002h 
-  0B4D 12    		DB 012h 
-  0B4E 79    		DB 079h ; 'y'
+  0B4C 021279		LJMP L0248
+
   0B4F 00    		DB 000h 
-  0B50 02    		DB 002h 
-  0B51 12    		DB 012h 
-  0B52 7A    		DB 07Ah ; 'z'
+  0B50 02127A		LJMP L0249
+
   0B53 00    		DB 000h 
-  0B54 02    		DB 002h 
-  0B55 12    		DB 012h 
-  0B56 7B    		DB 07Bh ; '{'
+  0B54 02127B		LJMP L0250
+
   0B57 00    		DB 000h 
-  0B58 02    		DB 002h 
-  0B59 12    		DB 012h 
-  0B5A 7C    		DB 07Ch ; '|'
+  0B58 02127C		LJMP L0251
+
   0B5B 00    		DB 000h 
-  0B5C 02    		DB 002h 
-  0B5D 12    		DB 012h 
-  0B5E 7D    		DB 07Dh ; '}'
+  0B5C 02127D		LJMP L0252
+
   0B5F 00    		DB 000h 
-  0B60 02    		DB 002h 
-  0B61 12    		DB 012h 
-  0B62 7E    		DB 07Eh ; '~'
+  0B60 02127E		LJMP L0253
+
   0B63 00    		DB 000h 
-  0B64 02    		DB 002h 
-  0B65 00    		DB 000h 
-  0B66 32    		DB 032h ; '2'
+  0B64 020032		LJMP L0237
+
   0B67 00    		DB 000h 
-  0B68 02    		DB 002h 
-  0B69 00    		DB 000h 
-  0B6A 32    		DB 032h ; '2'
+  0B68 020032		LJMP L0237
+
   0B6B 00    		DB 000h 
-  0B6C 02    		DB 002h 
-  0B6D 00    		DB 000h 
-  0B6E 32    		DB 032h ; '2'
+  0B6C 020032		LJMP L0237
+
   0B6F 00    		DB 000h 
-  0B70 02    		DB 002h 
-  0B71 12    		DB 012h 
-  0B72 7F    		DB 07Fh 
+  0B70 02127F		LJMP L0254
+
   0B73 00    		DB 000h 
-  0B74 02    		DB 002h 
-  0B75 12    		DB 012h 
-  0B76 80    		DB 080h 
+  0B74 021280		LJMP L0255
+
   0B77 00    		DB 000h 
-  0B78 02    		DB 002h 
-  0B79 12    		DB 012h 
-  0B7A 81    		DB 081h 
+  0B78 021281		LJMP L0256
+
   0B7B 00    		DB 000h 
-  0B7C 02    		DB 002h 
-  0B7D 12    		DB 012h 
-  0B7E 82    		DB 082h 
+  0B7C 021282		LJMP L0257
+
   0B7F 00    		DB 000h 
-  0B80 02    		DB 002h 
-  0B81 12    		DB 012h 
-  0B82 83    		DB 083h 
+  0B80 021283		LJMP L0258
+
   0B83 00    		DB 000h 
-  0B84 02    		DB 002h 
-  0B85 12    		DB 012h 
-  0B86 84    		DB 084h 
+  0B84 021284		LJMP L0259
+
   0B87 00    		DB 000h 
-  0B88 02    		DB 002h 
-  0B89 12    		DB 012h 
-  0B8A 85    		DB 085h 
+  0B88 021285		LJMP L0260
+
   0B8B 00    		DB 000h 
-  0B8C 02    		DB 002h 
-  0B8D 12    		DB 012h 
-  0B8E 86    		DB 086h 
+  0B8C 021286		LJMP L0261
+
   0B8F 00    		DB 000h 
-  0B90 02    		DB 002h 
-  0B91 12    		DB 012h 
-  0B92 87    		DB 087h 
+  0B90 021287		LJMP L0262
+
   0B93 00    		DB 000h 
-  0B94 02    		DB 002h 
-  0B95 12    		DB 012h 
-  0B96 88    		DB 088h 
+  0B94 021288		LJMP L0263
+
   0B97 00    		DB 000h 
-  0B98 02    		DB 002h 
-  0B99 12    		DB 012h 
-  0B9A 89    		DB 089h 
+  0B98 021289		LJMP L0264
+
   0B9B 00    		DB 000h 
-  0B9C 02    		DB 002h 
-  0B9D 12    		DB 012h 
-  0B9E 8A    		DB 08Ah 
+  0B9C 02128A		LJMP L0265
+
   0B9F 00    		DB 000h 
-  0BA0 02    		DB 002h 
-  0BA1 12    		DB 012h 
-  0BA2 8B    		DB 08Bh 
+  0BA0 02128B		LJMP L0266
+
   0BA3 00    		DB 000h 
-  0BA4 02    		DB 002h 
-  0BA5 12    		DB 012h 
-  0BA6 8C    		DB 08Ch 
+  0BA4 02128C		LJMP L0267
+
   0BA7 00    		DB 000h 
-  0BA8 02    		DB 002h 
-  0BA9 12    		DB 012h 
-  0BAA 8D    		DB 08Dh 
+  0BA8 02128D		LJMP L0268
+
   0BAB 00    		DB 000h 
-  0BAC 02    		DB 002h 
-  0BAD 12    		DB 012h 
-  0BAE 8E    		DB 08Eh 
+  0BAC 02128E		LJMP L0269
+
   0BAF 00    		DB 000h 
-  0BB0 02    		DB 002h 
-  0BB1 12    		DB 012h 
-  0BB2 8F    		DB 08Fh 
+  0BB0 02128F		LJMP L0270
+
   0BB3 00    		DB 000h 
-  0BB4 02    		DB 002h 
-  0BB5 12    		DB 012h 
-  0BB6 90    		DB 090h 
+  0BB4 021290		LJMP L0271
+
   0BB7 00    		DB 000h 
 
 # Registers and EP configuration
@@ -2217,10 +2180,18 @@ L0073:
   0CFA D3    		SETB C
   0CFB 22    		RET
 
-  0CFC 32    		DB 032h ; '2'
-  0CFD 32    		DB 032h ; '2'
-  0CFE 32    		DB 032h ; '2'
-  0CFF 32    		DB 032h ; '2'
+L0242:
+  0CFC 32    		RETI
+
+L0243:
+  0CFD 32    		RETI
+
+L0244:
+  0CFE 32    		RETI
+
+L0245:
+  0CFF 32    		RETI
+
   0D00 12    		DB 012h 
   0D01 01    		DB 001h 
   0D02 00    		DB 000h 
@@ -2612,6 +2583,7 @@ L0168:
   0EF4 120CDE		LCALL L0169
   0EF7 22    		RET
 
+L0234:
   0EF8 C0E0  		PUSH ACC
   0EFA C083  		PUSH DPH
   0EFC C082  		PUSH DPL
@@ -2646,6 +2618,7 @@ L0228:
   0F3B D0E0  		POP ACC
   0F3D 32    		RETI
 
+L0235:
   0F3E C0E0  		PUSH ACC
   0F40 C083  		PUSH DPH
   0F42 C082  		PUSH DPL
@@ -3018,6 +2991,7 @@ L0185:
   118E 7F00  		MOV R7, #0h
   1190 22    		RET
 
+L0233:
   1191 C0E0  		PUSH ACC
   1193 C083  		PUSH DPH
   1195 C082  		PUSH DPL
@@ -3038,6 +3012,7 @@ L0185:
   11B5 D0E0  		POP ACC
   11B7 32    		RETI
 
+L0232:
   11B8 C0E0  		PUSH ACC
   11BA C083  		PUSH DPH
   11BC C082  		PUSH DPL
@@ -3057,6 +3032,7 @@ L0185:
   11DA D0E0  		POP ACC
   11DC 32    		RETI
 
+L0231:
   11DD C0E0  		PUSH ACC
   11DF C083  		PUSH DPH
   11E1 C082  		PUSH DPL
@@ -3167,30 +3143,82 @@ L0196:
   1274 D2AF  		SETB EA                 # Globally enable interrupts
   1276 22    		RET
 
-  1277 32    		DB 032h ; '2'
-  1278 32    		DB 032h ; '2'
-  1279 32    		DB 032h ; '2'
-  127A 32    		DB 032h ; '2'
-  127B 32    		DB 032h ; '2'
-  127C 32    		DB 032h ; '2'
-  127D 32    		DB 032h ; '2'
-  127E 32    		DB 032h ; '2'
-  127F 32    		DB 032h ; '2'
-  1280 32    		DB 032h ; '2'
-  1281 32    		DB 032h ; '2'
-  1282 32    		DB 032h ; '2'
-  1283 32    		DB 032h ; '2'
-  1284 32    		DB 032h ; '2'
-  1285 32    		DB 032h ; '2'
-  1286 32    		DB 032h ; '2'
-  1287 32    		DB 032h ; '2'
-  1288 32    		DB 032h ; '2'
-  1289 32    		DB 032h ; '2'
-  128A 32    		DB 032h ; '2'
-  128B 32    		DB 032h ; '2'
-  128C 32    		DB 032h ; '2'
-  128D 32    		DB 032h ; '2'
-  128E 32    		DB 032h ; '2'
-  128F 32    		DB 032h ; '2'
-  1290 32    		DB 032h ; '2'
+L0246:
+  1277 32    		RETI
+
+L0247:
+  1278 32    		RETI
+
+L0248:
+  1279 32    		RETI
+
+L0249:
+  127A 32    		RETI
+
+L0250:
+  127B 32    		RETI
+
+L0251:
+  127C 32    		RETI
+
+L0252:
+  127D 32    		RETI
+
+L0253:
+  127E 32    		RETI
+
+L0254:
+  127F 32    		RETI
+
+L0255:
+  1280 32    		RETI
+
+L0256:
+  1281 32    		RETI
+
+L0257:
+  1282 32    		RETI
+
+L0258:
+  1283 32    		RETI
+
+L0259:
+  1284 32    		RETI
+
+L0260:
+  1285 32    		RETI
+
+L0261:
+  1286 32    		RETI
+
+L0262:
+  1287 32    		RETI
+
+L0263:
+  1288 32    		RETI
+
+L0264:
+  1289 32    		RETI
+
+L0265:
+  128A 32    		RETI
+
+L0266:
+  128B 32    		RETI
+
+L0267:
+  128C 32    		RETI
+
+L0268:
+  128D 32    		RETI
+
+L0269:
+  128E 32    		RETI
+
+L0270:
+  128F 32    		RETI
+
+L0271:
+  1290 32    		RETI
+
 END

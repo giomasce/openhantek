@@ -1039,7 +1039,7 @@ L0054:
 
 # After initialization and obscure data loading
 L0015:
-  06AD C204  		CLR 4h                  # Clear some random bits in 20h
+  06AD C204  		CLR 4h                  # Clear some random bits in 20h (they should be already clear)
   06AF C200  		CLR 0h
   06B1 C203  		CLR 3h
   06B3 C201  		CLR 1h
@@ -1586,6 +1586,7 @@ L0025:
   09AB 00    		DB 000h 
   09AC 00    		DB 000h 
 
+# I2C bus ISR
 L0206:
   09AD C0E0  		PUSH ACC
   09AF C083  		PUSH DPH
@@ -1604,10 +1605,10 @@ L0206:
   09CB C007  		PUSH 7h
   09CD 90E678		MOV DPTR, #0E678h
   09D0 E0    		MOVX A, @DPTR
-  09D1 30E206		JNB ACC.2, L0207
-  09D4 754106		MOV 41h, #6h
-  09D7 020A97		LJMP L0208
-L0207:
+  09D1 30E206		JNB ACC.2, L0207        # If there was an error on the I2C bus...
+  09D4 754106		MOV 41h, #6h            # #6h -> 41h
+  09D7 020A97		LJMP L0208              # Go to end
+L0207:                                  # If there was no error on the I2C bus...
   09DA 90E678		MOV DPTR, #0E678h
   09DD E0    		MOVX A, @DPTR
   09DE 20E10C		JB ACC.1, L0209
@@ -1706,9 +1707,9 @@ L0213:
   0A92 8003  		SJMP L0208
 L0215:
   0A94 754100		MOV 41h, #0h
-L0208:
-  0A97 5391DF		ANL 91h, #0DFh
-  0A9A D007  		POP 7h
+L0208:                                  # End of ISR
+  0A97 5391DF		ANL 91h, #0DFh          # Clear bit 5 in 91h
+  0A9A D007  		POP 7h                  # Pop everything and return
   0A9C D006  		POP 6h
   0A9E D003  		POP 3h
   0AA0 D002  		POP 2h
@@ -2033,7 +2034,11 @@ L0002:
 L0004:
   0C5E 0206AD		LJMP L0015
 
-# Read obscure data subprocedure 1
+# Read obscure data subprocedure 1.
+# Read a byte B. Then read other R7 bytes and copy them to the
+# positions starting from B. If Carry is set use MOVX, otherwise use
+# MOV for copying. Then return to L0009.
+# Reads R7, C. Writes in A, R0 and R7.
 L0006:
   0C61 E4    		CLR A
   0C62 93    		MOVC A, @A+DPTR
@@ -2053,7 +2058,12 @@ L0013:
   0C6F DFF4  		DJNZ R7, L0014
   0C71 8029  		SJMP L0009
 
-# Read obscure data subprocedure 2
+# Read obscure data subprocedure 2.
+# Read a byte from obscure code and interpret it as xyyyyzzz. Take
+# byte at address #20h + yyyy and set (if x == 1) or clear (if x == 0)
+# its bit in position zzz. Repeat everything R7 times. Then return to
+# L0009.
+# Reads R7. Writes in A, C, R0 and R7.
 L0007:
   0C73 E4    		CLR A
   0C74 93    		MOVC A, @A+DPTR
@@ -2080,6 +2090,7 @@ L0011:
   0C8D DFE4  		DJNZ R7, L0007
   0C8F 800B  		SJMP L0009
 
+# Left shift lookup table for obscure procedure 2
   0C91 01    		DB 001h 
   0C92 02    		DB 002h 
   0C93 04    		DB 004h 
@@ -2094,22 +2105,22 @@ L0003:
   0C99 900898		MOV DPTR, #0898h        # Start reading code bytes at 898h
 L0009:
   0C9C E4    		CLR A
-  0C9D 7E01  		MOV R6, #1h             # Set R6 to 1h
+  0C9D 7E01  		MOV R6, #1h             # R6 = #1h
   0C9F 93    		MOVC A, @A+DPTR         # Read a byte
   0CA0 60BC  		JZ L0004                # If it is zero, go to L0004
   0CA2 A3    		INC DPTR
-  0CA3 FF    		MOV R7, A
+  0CA3 FF    		MOV R7, A               # R7 = first byte
   0CA4 543F  		ANL A, #3Fh
-  0CA6 30E509		JNB ACC.5, L0005
+  0CA6 30E509		JNB ACC.5, L0005        # If first byte.5 is clear, jump to L0005
   0CA9 541F  		ANL A, #1Fh
-  0CAB FE    		MOV R6, A
+  0CAB FE    		MOV R6, A               # R6 = first byte & #1Fh
   0CAC E4    		CLR A
-  0CAD 93    		MOVC A, @A+DPTR
+  0CAD 93    		MOVC A, @A+DPTR         # Read another byte
   0CAE A3    		INC DPTR
-  0CAF 6001  		JZ L0005
-  0CB1 0E    		INC R6
+  0CAF 6001  		JZ L0005                # If second byte is zero, jump to L0005
+  0CB1 0E    		INC R6                  # R6 = (first byte & #1Fh) + 1
 L0005:
-  0CB2 CF    		XCH A, R7
+  0CB2 CF    		XCH A, R7               # A = first byte, R7 = (first byte & #3Fh) or (second byte, if it exists)
   0CB3 54C0  		ANL A, #0C0h
   0CB5 25E0  		ADD A, ACC
   0CB7 60A8  		JZ L0006
@@ -2406,7 +2417,6 @@ L0217:
   0DFF F583  		MOV DPH, A
   0E01 E0    		MOVX A, @DPTR
   0E02 22    		RET
-
 L0218:
   0E03 5006  		JNC L0219
   0E05 E9    		MOV A, R1
@@ -2414,7 +2424,6 @@ L0218:
   0E08 F8    		MOV R0, A
   0E09 E6    		MOV A, @R0
   0E0A 22    		RET
-
 L0219:
   0E0B BBFE06		CJNE R3, #0FEh, L0220
   0E0E E9    		MOV A, R1
@@ -2422,7 +2431,6 @@ L0219:
   0E11 F8    		MOV R0, A
   0E12 E2    		MOVX A, @R0
   0E13 22    		RET
-
 L0220:
   0E14 E582  		MOV A, DPL
   0E16 29    		ADD A, R1
@@ -2446,7 +2454,6 @@ L0221:
   0E2F E8    		MOV A, R0
   0E30 F0    		MOVX @DPTR, A
   0E31 22    		RET
-
 L0222:
   0E32 5006  		JNC L0223
   0E34 E9    		MOV A, R1
@@ -2454,7 +2461,6 @@ L0222:
   0E37 C8    		XCH A, R0
   0E38 F6    		MOV @R0, A
   0E39 22    		RET
-
 L0223:
   0E3A BBFE05		CJNE R3, #0FEh, L0224
   0E3D E9    		MOV A, R1
@@ -2584,14 +2590,13 @@ L0234:
   0F04 758600		MOV 86h, #0h
   0F07 90E680		MOV DPTR, #0E680h
   0F0A E0    		MOVX A, @DPTR
-  0F0B 30E70E		JNB ACC.7, L0227
+  0F0B 30E70E		JNB ACC.7, L0227        # If in high-speed mode...
   0F0E 850A0E		MOV 0Eh, 0Ah
   0F11 850B0F		MOV 0Fh, 0Bh
   0F14 851210		MOV 10h, 12h
   0F17 851311		MOV 11h, 13h
   0F1A 800C  		SJMP L0228
-
-L0227:
+L0227:                                  # If in full-speed mode...
   0F1C 85120E		MOV 0Eh, 12h
   0F1F 85130F		MOV 0Fh, 13h
   0F22 850A10		MOV 10h, 0Ah
@@ -2619,14 +2624,13 @@ L0235:
   0F4A 758600		MOV 86h, #0h
   0F4D 90E680		MOV DPTR, #0E680h
   0F50 E0    		MOVX A, @DPTR
-  0F51 30E70E		JNB ACC.7, L0229
+  0F51 30E70E		JNB ACC.7, L0229        # If in high-speed mode...
   0F54 850A0E		MOV 0Eh, 0Ah
   0F57 850B0F		MOV 0Fh, 0Bh
   0F5A 851210		MOV 10h, 12h
   0F5D 851311		MOV 11h, 13h
   0F60 800C  		SJMP L0230
-
-L0229:
+L0229:                                  # If in full-speed mode...
   0F62 85120E		MOV 0Eh, 12h
   0F65 85130F		MOV 0Fh, 13h
   0F68 850A10		MOV 10h, 0Ah

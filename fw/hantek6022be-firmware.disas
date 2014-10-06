@@ -1276,16 +1276,16 @@ L0021:
   0859 538EF8		ANL 8Eh, #0F8h
   085C C204  		CLR 4h
 L0034:                                  # Main loop from now on (probably)
-  085E 300105		JNB 1h, L0023
+  085E 300105		JNB 1h, L0023           # If bit 1h has been set, call L0024 and reset the bit
   0861 120413		LCALL L0024
   0864 C201  		CLR 1h
 L0023:
-  0866 300429		JNB 4h, L0025
-  0869 120040		LCALL L0026
-  086C 5024  		JNC L0025
-  086E C204  		CLR 4h
+  0866 300429		JNB 4h, L0025           # If bit 4h has been set...
+  0869 120040		LCALL L0026             # Call L0026 (which sets carry)
+  086C 5024  		JNC L0025               # If Carry has been set... (which will always be the case)
+  086E C204  		CLR 4h                  # Clear 4h
 L0030:
-  0870 121202		LCALL L0027
+  0870 121202		LCALL L0027             # Handle wakeup and suspend
   0873 200016		JB 0h, L0028
   0876 90E682		MOV DPTR, #0E682h
   0879 E0    		MOVX A, @DPTR
@@ -2346,10 +2346,10 @@ L0033:
   0D94 6401  		XRL A, #1h
   0D96 7031  		JNZ L0035
   0D98 751D02		MOV 1Dh, #2h
-  0D9B 90E6F5		MOV DPTR, #0E6F5h
+  0D9B 90E6F5		MOV DPTR, #0E6F5h       # Abort current GPIF transaction
   0D9E 74FF  		MOV A, #0FFh
   0DA0 F0    		MOVX @DPTR, A
-  0DA1 90E604		MOV DPTR, #0E604h
+  0DA1 90E604		MOV DPTR, #0E604h       # NAK all transfers from the host and reset all USB endpoints
   0DA4 7480  		MOV A, #80h
   0DA6 F0    		MOVX @DPTR, A
   0DA7 00    		NOP
@@ -2381,17 +2381,17 @@ L0036:
   0DC3 BE03F7		CJNE R6, #3h, L0037
   0DC6 BFE8F4		CJNE R7, #0E8h, L0037
 L0035:
-  0DC9 E5BB  		MOV A, 0BBh
+  0DC9 E5BB  		MOV A, 0BBh             # Do nothing if the GPIF transaction is not complete
   0DCB 30E725		JNB ACC.7, L0038
-  0DCE 90E6F4		MOV DPTR, #0E6F4h
+  0DCE 90E6F4		MOV DPTR, #0E6F4h       # Do nothing if GPIF RDY0 pin is cleared
   0DD1 E0    		MOVX A, @DPTR
   0DD2 30E01E		JNB ACC.0, L0038
-  0DD5 E5AC  		MOV A, 0ACh
+  0DD5 E5AC  		MOV A, 0ACh             # Do nothing if EP 6 is full
   0DD7 20E019		JB ACC.0, L0038
 L0039:
-  0DDA E5BB  		MOV A, 0BBh
+  0DDA E5BB  		MOV A, 0BBh             # Wait for the GPIF transaction to complete
   0DDC 30E7FB		JNB ACC.7, L0039
-  0DDF 90E6D0		MOV DPTR, #0E6D0h
+  0DDF 90E6D0		MOV DPTR, #0E6D0h       # Write #2800h in the two lowest bytes of the GPIF transactions count (why?)
   0DE2 7428  		MOV A, #28h
   0DE4 F0    		MOVX @DPTR, A
   0DE5 00    		NOP
@@ -2403,7 +2403,7 @@ L0039:
   0DED 00    		NOP
   0DEE 00    		NOP
   0DEF 00    		NOP
-  0DF0 75BB06		MOV 0BBh, #6h
+  0DF0 75BB06		MOV 0BBh, #6h           # ??
 L0038:
   0DF3 22    		RET
 
@@ -2648,6 +2648,7 @@ L0230:
   0F81 D0E0  		POP ACC
   0F83 32    		RETI
 
+# Wait for an amount of time specified in R6:R7
 L0043:
   0F84 8E2D  		MOV 2Dh, R6
   0F86 8F2E  		MOV 2Eh, R7
@@ -2937,7 +2938,7 @@ L0040:
   1148 30E119		JNB ACC.1, L0042
   114B E0    		MOVX A, @DPTR
   114C 30E715		JNB ACC.7, L0042
-L0041:
+L0041:                                  # We arrive here if a wakeup was detected by either of the two pins WU and WU2
   114F 90E680		MOV DPTR, #0E680h
   1152 E0    		MOVX A, @DPTR
   1153 4401  		ORL A, #1h
@@ -3048,11 +3049,11 @@ L0231:
   1201 32    		RETI
 
 L0027:
-  1202 90E682		MOV DPTR, #0E682h
+  1202 90E682		MOV DPTR, #0E682h       # Clear wakeup interrupts (WU and WU2)
   1205 E0    		MOVX A, @DPTR
   1206 44C0  		ORL A, #0C0h
   1208 F0    		MOVX @DPTR, A
-  1209 90E681		MOV DPTR, #0E681h
+  1209 90E681		MOV DPTR, #0E681h       # Enter suspend
   120C F0    		MOVX @DPTR, A
   120D 438701		ORL PCON, #1h
   1210 00    		NOP
@@ -3062,6 +3063,7 @@ L0027:
   1214 00    		NOP
   1215 22    		RET
 
+# Just waste a fixed number of cycles
 L0048:
   1216 7400  		MOV A, #0h
   1218 F586  		MOV 86h, A

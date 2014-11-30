@@ -12,10 +12,14 @@ defineReplace(surround) {
 
 TEMPLATE = app
 
+QMAKE_CXXFLAGS = -O0 -g
+QMAKE_CFLAGS = -O0 -g
+
 # Configuration
 CONFIG += \
 	warn_on \
-	qt
+  qt \
+  debug
 QT += opengl
 LIBS += -lfftw3
 

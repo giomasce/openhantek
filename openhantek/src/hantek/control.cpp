@@ -25,6 +25,7 @@
 
 
 #include <cmath>
+#include <cassert>
 #include <limits>
 
 #include <QList>
@@ -36,7 +37,6 @@
 #include "helper.h"
 #include "hantek/device.h"
 #include "hantek/types.h"
-
 
 namespace Hantek {
 	/// \brief Initializes the command buffers and lists.
@@ -399,6 +399,10 @@ namespace Hantek {
 		errorCode = this->device->bulkReadMulti(data, dataLength);
 		if(errorCode < 0)
 			return errorCode;
+
+    // Dump the data
+    assert(dataLength == 20480);
+    dump_data("packet.txt", data, data+1, 2, 2, dataLength/2);
 		
 		// Process the data only if we want it
 		if(process) {
@@ -523,7 +527,9 @@ namespace Hantek {
 					}
 				}
 			}
-			
+
+      assert(this->samplesSize[0] == this->samplesSize[1]);
+      dump_data("samples.txt", this->samples[0], this->samples[0], 1, 1, this->samplesSize[0]);
 			this->samplesMutex.unlock();
 			emit samplesAvailable(&(this->samples), &(this->samplesSize), this->settings.samplerate.current, &(this->samplesMutex));
 		}

@@ -31,6 +31,9 @@
 
 #include <QString>
 
+#include <iostream>
+#include <fstream>
+
 
 #if LIBUSB_VERSION == 0
 #define LIBUSB_SUCCESS                                         0
@@ -124,5 +127,15 @@ namespace Helper {
 	}
 };
 
+template< class T > void dump_data(char *filename, T *ch1, T *ch2, int stride1, int stride2, int length) {
+
+  std::ofstream fout;
+  fout.open(filename);
+  for (int i = 0; i < length; i++) {
+    fout << i << " " << float(ch1[i * stride1]) << " " << float(ch2[i * stride2]) << "\n";
+  }
+  fout.close();
+
+}
 
 #endif

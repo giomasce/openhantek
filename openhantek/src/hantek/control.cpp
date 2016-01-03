@@ -443,7 +443,7 @@ namespace Hantek {
 					}
 					
 					// Convert data from the oscilloscope and write it into the sample buffer
-					unsigned int bufferPosition = this->settings.trigger.point * 2;
+					unsigned int bufferPosition = 0;
 					if(this->specification.sampleSize > 8) {
 						// Additional most significant bits after the normal data
 						unsigned int extraBitsPosition; // Track the position of the extra bits in the additional byte
@@ -483,7 +483,7 @@ namespace Hantek {
 						}
 						
 						// Convert data from the oscilloscope and write it into the sample buffer
-						unsigned int bufferPosition = this->settings.trigger.point * 2;
+						unsigned int bufferPosition = 0;
 						if(this->specification.sampleSize > 8) {
 							// Additional most significant bits after the normal data
 							unsigned int extraBitsSize = this->specification.sampleSize - 8; // Number of extra bits
